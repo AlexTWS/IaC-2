@@ -20,4 +20,5 @@ resource "aws_instance" "example" {
         Name: "minion"
         project: "terraform"
     }
+    security_groups = [ "SSH" ]
 }
