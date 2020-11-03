@@ -17,7 +17,7 @@ resource "aws_instance" "example" {
     key_name = "ssh_key_desktop"
     instance_type = "t2.micro"
     tags = {
-        "Name": "minion"
+        Name: "minion"
         project: "terraform"
     }
 }
