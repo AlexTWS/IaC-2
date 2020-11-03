@@ -19,6 +19,5 @@ resource "aws_instance" "example" {
     tags = {
         "Name": "minion"
         project: "terraform"
-        tag: value
     }
 }
