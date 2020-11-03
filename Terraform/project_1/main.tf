@@ -12,11 +12,6 @@ provider "aws" {
     region = "eu-central-1"
 }
 
-resource "aws_vpc" "vpc" {
-    cidr_block = "10.0.0.0/24"
-    
-}
-
 resource "aws_instance" "minion" {
     ami = "ami-00a205cb8e06c3c4e"
     key_name = "ssh_key_desktop"
