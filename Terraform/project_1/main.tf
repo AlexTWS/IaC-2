@@ -12,37 +12,6 @@ provider "aws" {
     region = "eu-central-1"
 }
 
-resource "aws_vpc" "stripes_vpc" {
-    cidr_block = "10.0.0.0/16"
-    enable_dns_support = "true"
-    enable_dns_hostnames = "true"
-    tags = {
-        Name: "stripes_vpc"
-    }
-}
-
-resource "aws_subnet" "stripes_subnet_public" {
-    vpc_id = aws_vpc.stripes_vpc.id
-    cidr_block = "10.0.0.0/24"
-    map_public_ip_on_launch = "true"
-    availability_zone = "eu-central-1a"
-
-    tags = {
-        Name: "stripes_subnet_public"
-    }
-}
-
-resource "aws_subnet" "stripes_subnet_private" {
-    vpc_id = aws_vpc.stripes_vpc.id
-    cidr_block = "10.0.1.0/24"
-    map_public_ip_on_launch = "false"
-    availability_zone = "eu-central-1b"
-
-    tags = {
-        Name: "stripes_subnet_private"
-    }
-}
-
 resource "aws_security_group" "web_app" {
     name = "web_app"
     description = "allow HTTP port"
