@@ -67,7 +67,7 @@ resource "aws_instance" "web_app" {
     key_name = "ssh_key_desktop"
     instance_type = "t2.micro"
     subnet_id = aws_subnet.stripes_subnet_public.id
-    security_groups = [ "ssh", "web_app" ]
+    security_groups = [ aws_security_group.ssh.id, aws_security_group.web_app.id ]
         tags = {
         Name: "web_app"
         project: "terraform"
