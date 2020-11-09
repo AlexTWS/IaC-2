@@ -1,17 +1,3 @@
-terraform {
-    required_providers {
-        aws = {
-            source = "hashicorp/aws"
-            version = "~> 2.70"
-        }
-    }
-}
-
-provider "aws" {
-    profile = "default"
-    region = "eu-central-1"
-}
-
 resource "aws_vpc" "stripes_vpc" {
     cidr_block = "10.0.0.0/16"
     enable_dns_support = "true"
@@ -92,16 +78,4 @@ resource "aws_security_group" "ssh" {
     tags = {
         Name = "ssh"
     }
-}
-
-resource "aws_instance" "web_app" {
-    ami = "ami-00a205cb8e06c3c4e"
-    key_name = "ssh_key_desktop"
-    instance_type = "t2.micro"
-    tags = {
-        Name: "web_app"
-        project: "terraform"
-    }
-    subnet_id = aws_subnet.stripes_subnet_public.id
-    security_groups = [ "ssh" ]
 }
