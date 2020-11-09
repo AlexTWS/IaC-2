@@ -1,3 +1,5 @@
+######## VPC ########
+
 resource "aws_vpc" "stripes_vpc" {
     cidr_block = "10.0.0.0/16"
     enable_dns_support = "true"
@@ -6,6 +8,8 @@ resource "aws_vpc" "stripes_vpc" {
         Name: "stripes_vpc"
     }
 }
+
+######## SUBNETS ########
 
 resource "aws_subnet" "stripes_subnet_public" {
     vpc_id = aws_vpc.stripes_vpc.id
@@ -29,6 +33,23 @@ resource "aws_subnet" "stripes_subnet_private" {
     }
 }
 
+######## INTERNET GATEWAY ########
+
 resource "aws_internet_gateway" "stripes_igw" {
     vpc_id = aws_vpc.stripes_vpc.id
+}
+
+######## ROUTE TABLES ########
+
+resource "aws_route_table" "stripes_public_rtb" {
+    vpc_id = aws_vpc.stripes_vpc.id
+
+    route {
+        cidr_block = aws_subnet.stripes_subnet_public.cidr_block
+        gateway_id = aws_internet_gateway.stripes_igw.id
+    }
+
+    tags = {
+        Name: "stripes_public_rtb"
+    }
 }
