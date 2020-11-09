@@ -73,4 +73,5 @@ resource "aws_instance" "web_app" {
         project: "terraform"
     }
     user_data = file("webapp.sh")
+    depends_on = [aws_internet_gateway.stripes_igw]
 }
