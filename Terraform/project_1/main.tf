@@ -103,5 +103,5 @@ resource "aws_instance" "web_app" {
         Name: "web_app"
         project: "terraform"
     }
-    user_data = "${file("webapp.sh")}"
+    user_data = file("webapp.sh")
 }
