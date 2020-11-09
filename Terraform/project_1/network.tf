@@ -45,7 +45,7 @@ resource "aws_route_table" "stripes_public_rtb" {
     vpc_id = aws_vpc.stripes_vpc.id
 
     route {
-        cidr_block = aws_subnet.stripes_subnet_public.cidr_block
+        cidr_block = "10.0.0.0/24"
         gateway_id = aws_internet_gateway.stripes_igw.id
     }
 
