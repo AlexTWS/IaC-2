@@ -103,7 +103,7 @@ resource "aws_instance" "web_app" {
         Name: "web_app"
         project: "terraform"
     }
-    user_data = << EOF
+    user_data = [ << EOF
             #! /bin/bash
             yum update
             yum install httpd
@@ -111,4 +111,5 @@ resource "aws_instance" "web_app" {
             systemctl enable httpd
             echo "<h1>Hello from Terraform</h1>" >> /var/www/html/index.html
     EOF
+    ]
 }
