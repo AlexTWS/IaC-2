@@ -97,10 +97,18 @@ resource "aws_instance" "web_app" {
     ami = "ami-00a205cb8e06c3c4e"
     key_name = "ssh_key_desktop"
     instance_type = "t2.micro"
-    tags = {
+    subnet_id = aws_subnet.stripes_subnet_public.id
+    security_groups = [ "ssh" ]
+        tags = {
         Name: "web_app"
         project: "terraform"
     }
-    subnet_id = aws_subnet.stripes_subnet_public.id
-    security_groups = [ "ssh" ]
+    user_data = << EOF
+            #! /bin/bash
+            yum update
+            yum install httpd
+            systemctl start httpd
+            systemctl enable httpd
+            echo "<h1>Hello from Terraform</h1>" >> /var/www/html/index.html
+    EOF
 }
