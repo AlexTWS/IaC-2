@@ -41,7 +41,7 @@ resource "aws_internet_gateway" "stripes_igw" {
 
 ######## ROUTE TABLES ########
 
-resource "aws_route_table" "stripes_public_rtb" {
+resource "aws_route_table" "stripes_rtb_public" {
     vpc_id = aws_vpc.stripes_vpc.id
 
     route {
@@ -50,11 +50,11 @@ resource "aws_route_table" "stripes_public_rtb" {
     }
 
     tags = {
-        Name: "stripes_public_rtb"
+        Name: "stripes_rtb_public"
     }
 }
 
-resource "aws_route_table_association" "rtb_publicSubnet_association" {
+resource "aws_route_table_association" "rtb_to_public_subnet_association" {
   subnet_id      = aws_subnet.stripes_subnet_public.id
-  route_table_id = aws_route_table.stripes_public_rtb.id
+  route_table_id = aws_route_table.stripes_rtb_public.id
 }
