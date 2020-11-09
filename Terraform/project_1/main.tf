@@ -16,9 +16,8 @@ resource "aws_vpc" "stripes_vpc" {
     cidr_block = "10.0.0.0/16"
     enable_dns_support = "true"
     enable_dns_hostnames = "true"
-
-    tags {
-        Name = "stripes_vpc"
+    tags = {
+        Name: "stripes_vpc"
     }
 }
 
@@ -28,8 +27,8 @@ resource "aws_subnet" "stripes_subnet_public" {
     map_public_ip_on_launch = "true"
     availability_zone = "eu-central-1a"
 
-    tags {
-        Name = "stripes_subnet_public"
+    tags = {
+        Name: "stripes_subnet_public"
     }
 }
 
@@ -39,8 +38,8 @@ resource "aws_subnet" "stripes_subnet_private" {
     map_public_ip_on_launch = "false"
     availability_zone = "eu_central_1b"
 
-    tags {
-        Name = "stripes_subnet_private"
+    tags = {
+        Name: "stripes_subnet_private"
     }
 }
 
