@@ -1,2 +1,3 @@
-# IaC
-Infrastructure as Code files
+# Infrastructure as Code
+This repo contains projects that use IaC to create different solutions in different approaches.
+For a detailed explanation of each project, please read the README file placed inside each project's directory.
