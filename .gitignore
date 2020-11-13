@@ -1,1 +1,5 @@
+# Ignore Terraform files for project 1
+1.simple_web_server/.terraform/
 
+# Ignore Terraform files for project 2
+2.scalable_website/.terraform/
