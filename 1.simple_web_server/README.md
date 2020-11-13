@@ -8,6 +8,6 @@ This is a simple project that creates the following:
   * Routing table
   * Associate Routing table with public subnet
 * Resources:
-  * Internet gateway attached it to the VPC
+  * Internet gateway attached to the VPC
   * EC2 instance placed in the puclic subnet and and configured using user data
   * Security groups for SSH access and web access to the EC2 instance
