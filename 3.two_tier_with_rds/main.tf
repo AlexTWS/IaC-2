@@ -46,7 +46,7 @@ resource "aws_launch_configuration" "web" {
   instance_type   = var.instance_type
   key_name        = var.key_name
   security_groups = [aws_security_group.web.id]
-  user_data = file("install_mysql_client.sh")
+  user_data       = file("install_mysql_client.sh")
 }
 
 resource "aws_autoscaling_group" "web" {
@@ -66,6 +66,11 @@ resource "aws_db_instance" "rds" {
   username               = "root"
   password               = var.db_password
   vpc_security_group_ids = [aws_security_group.rds.id]
-  db_subnet_group_name   = aws_subnet.sub_private_1.name
+  db_subnet_group_name   = aws_db_subnet_group.rds_subnet.name
   multi_az               = true
+}
+
+resource "aws_db_subnet_group" "rds_subnet" {
+  name       = "my_rds_subnet"
+  subnet_ids = [aws_subnet.sub_private_1.id, aws_subnet.sub_private_2.id]
 }
