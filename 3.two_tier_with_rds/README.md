@@ -13,7 +13,6 @@ This project will create the infrastructure for a scalable, and highly available
   * Application load balancer
   * Target group
   * Launch configuration for the auto scaling group
-  * Auto scaling group associated with the target group that spans from 2 to 4 instances for scalability, and spread across 2 subnets for high ava$
+  * Auto scaling group associated with the target group that spans from 2 to 4 instances for scalability, and spread across 2 subnets for high availability
   * Database instance using RDS with multi-AZ. the primary instance and the standby instance are in two different AZs for high availability
   * Security groups for the load balancer, target group, and RDS instance
-
