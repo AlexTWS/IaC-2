@@ -28,6 +28,7 @@ resource "aws_lb" "lb" {
 
 resource "aws_lb_target_group" "web" {
   vpc_id = aws_vpc.vpc.id
+  port = 80
 }
 
 resource "aws_lb_listener" "lb_listener" {
