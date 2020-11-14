@@ -46,7 +46,7 @@ resource "aws_launch_configuration" "web" {
   instance_type   = var.instance_type
   key_name        = var.key_name
   security_groups = [aws_security_group.web.id]
-  #user_data = "value"
+  user_data = file("install_mysql_client.sh")
 }
 
 resource "aws_autoscaling_group" "web" {
