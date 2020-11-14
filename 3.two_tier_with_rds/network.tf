@@ -37,10 +37,10 @@ resource "aws_subnet" "sub_private_2" {
 # ROUTE TABLE
 resource "aws_route_table" "rtb" {
   vpc_id = aws_vpc.vpc.id
-  route = [{
+  route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
-  }]
+  }
 }
 
 resource "aws_route_table_association" "rtb_to_sub_public_1" {
