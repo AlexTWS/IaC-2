@@ -1,7 +1,7 @@
 # Two-tier Application with RDS Database
 ![alt text](https://github.com/MrKhalidJ/IaC/blob/main/3.two_tier_with_rds/diagram_p3.png?raw=true)
 
-This project will create the infrastructure for scalable, and highly available two-tier architecture. Applying these configuration files will create the following:
+This project will create the infrastructure for a scalable, and highly available two-tier architecture. Applying these configuration files will create the following:
 * Network:
   * VPC
   * Two public subnets
