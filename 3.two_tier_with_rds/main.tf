@@ -60,10 +60,12 @@ resource "aws_autoscaling_group" "web" {
 
 # ------------------ RELATIONAL DATABASE SERVICE ----------------- #
 resource "aws_db_instance" "name" {
-  instance_class    = "db.t2.micro"
-  allocated_storage = 20
-  engine            = "mysql"
-  username          = "root"
-  password          = var.db_password
-  multi_az          = true
+  instance_class         = "db.t2.micro"
+  allocated_storage      = 20
+  engine                 = "mysql"
+  username               = "root"
+  password               = var.db_password
+  vpc_security_group_ids = [aws_security_group.rds.id]
+  db_subnet_group_name   = aws_subnet.sub_private_1
+  multi_az               = true
 }
