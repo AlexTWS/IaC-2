@@ -17,6 +17,12 @@ resource "aws_security_group" "lb" {
 resource "aws_security_group" "web" {
   vpc_id = aws_vpc.vpc.id
   ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # NEEDS TO BE CHANGED TO A MORE CLOSED DOWN CIDR BLOCK WHEN IN PRODUCTION
+  }
+  ingress {
     from_port       = 80
     to_port         = 80
     protocol        = "tcp"
