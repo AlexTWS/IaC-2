@@ -45,8 +45,9 @@ variable "az_b" {
 }
 
 variable "image_id" {
-  type    = string
-  default = "ami-00a205cb8e06c3c4e"
+  description = "Ubuntu 20.04 LTS Image"
+  type        = string
+  default     = "ami-0502e817a62226e03"
 }
 
 variable "instance_type" {
