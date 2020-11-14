@@ -53,19 +53,19 @@ resource "aws_autoscaling_group" "web" {
   min_size             = 2
   max_size             = 4
   desired_capacity     = 2
-  launch_configuration = aws_launch_configuration.web
+  launch_configuration = aws_launch_configuration.web.name
   vpc_zone_identifier  = [aws_subnet.sub_public_1.id, aws_subnet.sub_public_2.id]
   target_group_arns    = [aws_lb_target_group.web.arn]
 }
 
 # ------------------ RELATIONAL DATABASE SERVICE ----------------- #
-resource "aws_db_instance" "name" {
+resource "aws_db_instance" "rds" {
   instance_class         = "db.t2.micro"
   allocated_storage      = 20
   engine                 = "mysql"
   username               = "root"
   password               = var.db_password
   vpc_security_group_ids = [aws_security_group.rds.id]
-  db_subnet_group_name   = aws_subnet.sub_private_1
+  db_subnet_group_name   = aws_subnet.sub_private_1.name
   multi_az               = true
 }
