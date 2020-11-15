@@ -18,8 +18,7 @@ resource "aws_launch_configuration" "web" {
   instance_type   = "t2.micro"
   key_name        = "ssh_key_desktop"
   security_groups = [aws_security_group.target_group.id]
-  user_data       = file("user_data/hugo_site.sh")
-  #user_data      = file("webapp.sh")
+  user_data      = file("webapp.sh")
 }
 
 resource "aws_autoscaling_group" "web" {
