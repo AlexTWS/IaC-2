@@ -18,7 +18,8 @@ resource "aws_launch_configuration" "web" {
   instance_type   = "t2.micro"
   key_name        = "ssh_key_desktop"
   security_groups = [aws_security_group.target_group.id]
-  user_data       = file("webapp.sh")
+  user_data       = file("user_data/hugo_site.sh")
+  #user_data      = file("webapp.sh")
 }
 
 resource "aws_autoscaling_group" "web" {
@@ -32,10 +33,10 @@ resource "aws_autoscaling_group" "web" {
 
 #### LOAD BALANCER ####
 resource "aws_lb" "load_balancer" {
-  security_groups                  = [aws_security_group.load_balancer.id]
-  internal                         = false
-  load_balancer_type               = "application"
-  subnets                          = [aws_subnet.company_subnet_public_1.id, aws_subnet.company_subnet_public_2.id]
+  security_groups    = [aws_security_group.load_balancer.id]
+  internal           = false
+  load_balancer_type = "application"
+  subnets            = [aws_subnet.company_subnet_public_1.id, aws_subnet.company_subnet_public_2.id]
   # enable_cross_zone_load_balancing = true
 }
 
