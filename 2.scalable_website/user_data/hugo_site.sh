@@ -27,5 +27,13 @@ git init
 git clone https://github.com/adityatelange/hugo-PaperMod themes/hugo-PaperMod --depth=1 #install theme
 echo 'theme = "hugo-PaperMod"' >> config.toml
 hugo new posts/hello-from-terraform.md
-echo "If you see this, everything is working just fine!" >> content/posts/hello-from-terraform.md
+tee content/posts/hello-from-terraform.md > /dev/null <<EOF
+---
+title: "Hello From Terraform"
+date: 2020-11-15T20:23:04Z
+draft: false
+---
+
+If you see this, everything is working just fine!
+EOF
 hugo
