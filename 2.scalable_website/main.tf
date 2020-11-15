@@ -14,7 +14,7 @@ provider "aws" {
 
 #### AUTO SCALING GROUP ####
 resource "aws_launch_configuration" "web" {
-  image_id        = "ami-00a205cb8e06c3c4e"
+  image_id        = "ami-0502e817a62226e03"
   instance_type   = "t2.micro"
   key_name        = "ssh_key_desktop"
   security_groups = [aws_security_group.target_group.id]
