@@ -20,8 +20,7 @@ EOF
 systemctl restart nginx
 
 # HUGO SITE
-su ubuntu
-cd
+cd /home/ubuntu
 hugo new site welcome
 cd welcome/
 git init
