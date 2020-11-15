@@ -11,3 +11,5 @@ This is a simple project that creates the following:
   * Internet gateway attached to the VPC
   * EC2 instance placed in the puclic subnet and and configured using user data
   * Security groups for SSH access and web access to the EC2 instance
+
+After applying, proceed to visit the EC2 IP address and check the web page.

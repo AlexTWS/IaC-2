@@ -14,3 +14,5 @@ Applying this terraform project witll create the following:
   * Launch configuration for the auto scaling group
   * Auto scaling group associated with the target group that spans from 2 to 4 instances for scalability, and spread across 2 subnets for high availability
   * Security groups for the load balancer and target group
+
+When finished, navigate to the load balancer's address to visit the web page.
