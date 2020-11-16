@@ -14,7 +14,7 @@ provider "aws" {
 
 #### AUTO SCALING GROUP ####
 resource "aws_launch_configuration" "web" {
-  image_id        = "ami-0502e817a62226e03"
+  image_id        = "ami-00a205cb8e06c3c4e"
   instance_type   = "t2.micro"
   key_name        = "ssh_key_desktop"
   security_groups = [aws_security_group.target_group.id]
@@ -55,7 +55,7 @@ resource "aws_lb_listener" "lb_listener" {
   }
 }
 
-output "lb" {
-  description = "Load balancer ip address"
+output "lb_address" {
+  description = "Load balancer DNS name"
   value = aws_lb.load_balancer.dns_name
 }
