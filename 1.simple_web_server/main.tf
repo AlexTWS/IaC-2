@@ -75,3 +75,8 @@ resource "aws_instance" "web_server" {
   user_data  = file("webapp.sh")
   depends_on = [aws_internet_gateway.igw]
 }
+
+output "instance_dns_name" {
+  description = "Instance DNS name"
+  value = aws_instance.web_server.public_dns
+}
