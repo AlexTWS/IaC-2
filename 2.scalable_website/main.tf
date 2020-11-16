@@ -54,3 +54,8 @@ resource "aws_lb_listener" "lb_listener" {
     target_group_arn = aws_lb_target_group.target_group.arn
   }
 }
+
+output "lb" {
+  description = "Load balancer ip address"
+  value = aws_lb.load_balancer.dns_name
+}
