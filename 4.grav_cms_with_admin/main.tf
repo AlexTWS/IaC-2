@@ -25,5 +25,5 @@ resource "aws_instance" "grav" {
 }
 
 output "Address" {
-  value = aws_instance.grav.public_dns
+  value = aws_instance.grav.public_ip
 }
