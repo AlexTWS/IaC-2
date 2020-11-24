@@ -22,3 +22,7 @@ resource "aws_instance" "grav" {
     "Name" = "Grav website"
   }
 }
+
+output "Address" {
+  value = aws_instance.grav.public_ip
+}
