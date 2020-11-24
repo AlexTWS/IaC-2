@@ -6,3 +6,6 @@
 
 # Ignore Terraform files for project 3
 3.two_tier_with_rds/.terraform/
+
+# Ignore Terraform files for project 4
+4.grav_cms_with_admin/.terraform/
