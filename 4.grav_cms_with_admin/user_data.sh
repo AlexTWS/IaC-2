@@ -3,6 +3,7 @@
 apt -y update
 apt -y install php #installs PHP and Apache web server
 apt -y install zip unzip
+apt -y install php-curl php-xml php-gd php-json php-mbstring php-zip #install php extensions
 
 rm /var/www/html/index.html #remove default index.html
 wget https://getgrav.org/download/core/grav-admin/latest #download latest release of Grav with admin panel
