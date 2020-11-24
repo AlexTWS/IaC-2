@@ -18,11 +18,12 @@ resource "aws_instance" "grav" {
   security_groups = [aws_security_group.web.id, aws_security_group.ssh.id]
   user_data       = file("user_data.sh")
   subnet_id       = aws_subnet.subnet.id
+  key_name = var.key_name
   tags = {
     "Name" = "Grav website"
   }
 }
 
 output "Address" {
-  value = aws_instance.grav.public_ip
+  value = aws_instance.grav.public_dns
 }
