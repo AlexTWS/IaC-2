@@ -27,8 +27,8 @@ resource "aws_lb" "lb" {
 }
 
 resource "aws_lb_target_group" "web" {
-  vpc_id = aws_vpc.vpc.id
-  port = 80
+  vpc_id   = aws_vpc.vpc.id
+  port     = 80
   protocol = "HTTP"
 }
 
@@ -70,6 +70,7 @@ resource "aws_db_instance" "rds" {
   vpc_security_group_ids = [aws_security_group.rds.id]
   db_subnet_group_name   = aws_db_subnet_group.rds_subnet.name
   multi_az               = true
+  skip_final_snapshot    = true
 }
 
 resource "aws_db_subnet_group" "rds_subnet" {
