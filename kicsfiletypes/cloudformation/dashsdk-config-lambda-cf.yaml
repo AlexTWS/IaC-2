@@ -1,0 +1,289 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "Track IAM config changes and remediate non-complicance issues"
+Parameters:
+    StageParameter:
+        Type: String
+        Default: "dev"
+        Description: "Stage of the Stack, i.e. dev, st, uat, prod"
+    IamPasswordPolicyParamMaxPasswordAge:
+        Default: '90'
+        Type: String
+    IamPasswordPolicyParamMinimumPasswordLength:
+        Default: '14'
+        Type: String
+    IamPasswordPolicyParamPasswordReusePrevention:
+        Default: '24'
+        Type: String
+    IamPasswordPolicyParamRequireLowercaseCharacters:
+        Default: 'true'
+        Type: String
+    IamPasswordPolicyParamRequireNumbers:
+        Default: 'true'
+        Type: String
+    IamPasswordPolicyParamRequireSymbols:
+        Default: 'true'
+        Type: String
+    IamPasswordPolicyParamRequireUppercaseCharacters:
+        Default: 'true'
+        Type: String
+Conditions:
+    iamPasswordPolicyParamMaxPasswordAge:
+        Fn::Not:
+        - Fn::Equals:
+            - ''
+            - Ref: IamPasswordPolicyParamMaxPasswordAge
+    iamPasswordPolicyParamMinimumPasswordLength:
+        Fn::Not:
+        - Fn::Equals:
+            - ''
+            - Ref: IamPasswordPolicyParamMinimumPasswordLength
+    iamPasswordPolicyParamPasswordReusePrevention:
+        Fn::Not:
+        - Fn::Equals:
+            - ''
+            - Ref: IamPasswordPolicyParamPasswordReusePrevention
+    iamPasswordPolicyParamRequireLowercaseCharacters:
+        Fn::Not:
+        - Fn::Equals:
+            - ''
+            - Ref: IamPasswordPolicyParamRequireLowercaseCharacters
+    iamPasswordPolicyParamRequireNumbers:
+        Fn::Not:
+        - Fn::Equals:
+            - ''
+            - Ref: IamPasswordPolicyParamRequireNumbers
+    iamPasswordPolicyParamRequireSymbols:
+        Fn::Not:
+        - Fn::Equals:
+            - ''
+            - Ref: IamPasswordPolicyParamRequireSymbols
+    iamPasswordPolicyParamRequireUppercaseCharacters:
+        Fn::Not:
+        - Fn::Equals:
+            - ''
+            - Ref: IamPasswordPolicyParamRequireUppercaseCharacters
+Resources:
+    S3Bucket:
+        Type: 'AWS::S3::Bucket'
+        DeletionPolicy: Delete
+    ConfigRole:
+        DependsOn:
+            - S3Bucket
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: "Allow"
+                      Principal:
+                          Service:
+                              - config.amazonaws.com
+                      Action:
+                          - sts:AssumeRole
+            Path: "/"
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/service-role/AWS_ConfigRole
+            Policies:
+                - PolicyName: "config-s3-access"
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: "Allow"
+                            Action:
+                                - s3:PutObject
+                                - s3:PutObjectAcl
+                            Resource: 
+                                - !Sub arn:aws:s3:::${S3Bucket}/*
+                                - !Sub arn:aws:s3:::${S3Bucket}
+                            Condition:
+                                StringLike:
+                                    s3:x-amz-acl: bucket-owner-full-control
+                          - Effect: "Allow"
+                            Action:
+                                - s3:GetBucketAcl
+                                - s3:ListBucket
+                            Resource: 
+                                - !Sub arn:aws:s3:::${S3Bucket}/*
+                                - !Sub arn:aws:s3:::${S3Bucket}
+    DeliveryChannel: 
+        DependsOn:
+            - S3Bucket
+        Type: AWS::Config::DeliveryChannel
+        Properties: 
+            ConfigSnapshotDeliveryProperties: 
+                DeliveryFrequency: Six_Hours
+            S3BucketName: 
+                Ref: S3Bucket
+    IAMConfigRecorder:
+        DependsOn:
+            - ConfigRole
+        Type: AWS::Config::ConfigurationRecorder
+        Properties: 
+            Name: default
+            RecordingGroup: 
+                ResourceTypes: 
+                    - "AWS::IAM::Policy"
+            RoleARN: 
+                Fn::GetAtt: 
+                    - ConfigRole
+                    - Arn
+    IamPasswordPolicyConfigRule:
+        DependsOn:
+            - IAMConfigRecorder
+        Type: AWS::Config::ConfigRule
+        Properties:
+            ConfigRuleName: iam-password-policy
+            InputParameters:
+                MaxPasswordAge:
+                    Fn::If:
+                    - iamPasswordPolicyParamMaxPasswordAge
+                    - Ref: IamPasswordPolicyParamMaxPasswordAge
+                    - Ref: AWS::NoValue
+                MinimumPasswordLength:
+                    Fn::If:
+                    - iamPasswordPolicyParamMinimumPasswordLength
+                    - Ref: IamPasswordPolicyParamMinimumPasswordLength
+                    - Ref: AWS::NoValue
+                PasswordReusePrevention:
+                    Fn::If:
+                    - iamPasswordPolicyParamPasswordReusePrevention
+                    - Ref: IamPasswordPolicyParamPasswordReusePrevention
+                    - Ref: AWS::NoValue
+                RequireLowercaseCharacters:
+                    Fn::If:
+                    - iamPasswordPolicyParamRequireLowercaseCharacters
+                    - Ref: IamPasswordPolicyParamRequireLowercaseCharacters
+                    - Ref: AWS::NoValue
+                RequireNumbers:
+                    Fn::If:
+                    - iamPasswordPolicyParamRequireNumbers
+                    - Ref: IamPasswordPolicyParamRequireNumbers
+                    - Ref: AWS::NoValue
+                RequireSymbols:
+                    Fn::If:
+                    - iamPasswordPolicyParamRequireSymbols
+                    - Ref: IamPasswordPolicyParamRequireSymbols
+                    - Ref: AWS::NoValue
+                RequireUppercaseCharacters:
+                    Fn::If:
+                    - iamPasswordPolicyParamRequireUppercaseCharacters
+                    - Ref: IamPasswordPolicyParamRequireUppercaseCharacters
+                    - Ref: AWS::NoValue
+            Source:
+                Owner: AWS
+                SourceIdentifier: IAM_PASSWORD_POLICY
+    IAMRemediationConfiguration:
+        Type: AWS::Config::RemediationConfiguration
+        Properties:
+            ConfigRuleName: !Ref IamPasswordPolicyConfigRule
+            TargetId: "AWSConfigRemediation-SetIAMPasswordPolicy"
+            TargetType: "SSM_DOCUMENT"
+            Automatic: True
+            MaximumAutomaticAttempts: 1
+            RetryAttemptSeconds: 10
+            Parameters:
+                AutomationAssumeRole:
+                    StaticValue:
+                        Values: 
+                            - !GetAtt automationAssumeRole.Arn
+                MaxPasswordAge:
+                    StaticValue:
+                        Values:
+                            - !Ref IamPasswordPolicyParamMaxPasswordAge
+                MinimumPasswordLength:
+                    StaticValue:
+                        Values:
+                            - !Ref IamPasswordPolicyParamMinimumPasswordLength
+                PasswordReusePrevention:
+                    StaticValue:
+                        Values:
+                            - !Ref IamPasswordPolicyParamPasswordReusePrevention
+                RequireLowercaseCharacters:
+                    StaticValue:
+                        Values:
+                            - !Ref IamPasswordPolicyParamRequireLowercaseCharacters
+                RequireNumbers:
+                    StaticValue:
+                        Values:
+                            - !Ref IamPasswordPolicyParamRequireNumbers
+                RequireSymbols:
+                    StaticValue:
+                        Values:
+                            - !Ref IamPasswordPolicyParamRequireSymbols
+                RequireUppercaseCharacters:
+                    StaticValue:
+                        Values:
+                            - !Ref IamPasswordPolicyParamRequireUppercaseCharacters
+    ConfigTriggerLogGroup:
+        Type: AWS::Logs::LogGroup
+        Properties:
+            LogGroupName: "/aws/lambda/booster-cf-config-trigger"
+    lambdaExecutionRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: "Allow"
+                      Principal:
+                          Service:
+                              - lambda.amazonaws.com
+                      Action:
+                          - sts:AssumeRole
+            Path: "/"
+            Policies:
+                - PolicyName: "booster-function-logs"
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: "Allow"
+                            Action:
+                                - "Logs:*"
+                            Resource: "arn:aws:logs:*:*:*"
+    automationAssumeRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: 2012-10-17
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                        Service:
+                            - ssm.amazonaws.com
+                            - iam.amazonaws.com
+                      Action: sts:AssumeRole
+            Path: /
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole
+            Policies:
+                - PolicyName: "lambda-cf-ssm-policy"
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: "Allow"
+                            Action:
+                                - ssm:StartAutomationExecution
+                                - ssm:GetAutomationExecution
+                                - iam:GetAccountPasswordPolicy
+                                - iam:UpdateAccountPasswordPolicy
+                            Resource: "*"
+    ConfigTriggerFunction:
+        Type: AWS::Lambda::Function
+        Properties:
+            Handler: src/functions/HelloWorld.handler
+            Role:
+                Fn::GetAtt: lambdaExecutionRole.Arn
+            Runtime: "nodejs14.x"
+            MemorySize: 128
+            Timeout: 5
+            Environment:
+                Variables:
+                    "test": "something dummy"
+            Description: "Another Lambda function"
+        DependsOn:
+            - ConfigTriggerLogGroup
+            - lambdaExecutionRole
+Outputs:
+    LambdaArn:
+        Value:
+            Fn::GetAtt: ConfigTriggerFunction.Arn

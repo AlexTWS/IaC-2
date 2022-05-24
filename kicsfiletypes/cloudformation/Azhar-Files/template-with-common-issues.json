@@ -1,0 +1,1621 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Mappings": {
+      "MainAMI": {
+        "us-east-1": {
+          "HVM64": "ami-07d8bef6106c9deee"
+        },
+        "us-east-2": {
+          "HVM64": "ami-09d3421011534763e"
+        },
+        "us-west-1": {
+          "HVM64": "ami-0a56d1fb91abe14ea"
+        },
+        "ap-northeast-1": {
+          "HVM64": "ami-0ce0fcf985b2c545d"
+        },
+        "ap-northeast-2": {
+          "HVM64": "ami-0874697959023a475"
+        },
+        "ap-southeast-1": {
+          "HVM64": "ami-02ce7db1c1d4abe17"
+        },
+        "ap-southeast-2": {
+          "HVM64": "ami-0be6e116d4f19e30f"
+        },
+        "eu-central-1": {
+          "HVM64": "ami-0c84b11d71e2acd0c"
+        },
+        "eu-west-1": {
+          "HVM64": "ami-0ac4a78229423c0e0"
+        },
+        "eu-west-2": {
+          "HVM64": "ami-06de6196369677dcb"
+        }
+      }
+    },
+    "Metadata": {
+      "AWS::CloudFormation::Interface": {
+        "ParameterGroups": [
+          {
+            "Parameters": [
+              "OrganizationID",
+              "LicenseKey"
+            ],
+            "Label": {
+              "default": "Data on Organization and License"
+            }
+          },
+          {
+            "Parameters": [
+              "EmailAddr"
+            ],
+            "Label": {
+              "default": "Settings of the application"
+            }
+          },
+          {
+            "Parameters": [
+              "AvailabilityZone",
+              "KeyName",
+              "IPRangeAccess"
+            ],
+            "Label": {
+              "default": "Settings of AWS"
+            }
+          },
+          {
+            "Parameters": [
+              "EFSIP"
+            ],
+            "Label": {
+              "default": "EFS"
+            }
+          },
+          {
+            "Parameters": [
+              "SubnetPrivate",
+              "VPCID",
+              "PrivateRouteTable",
+              "PublicSubnetCIDR"
+            ],
+            "Label": {
+              "default": "VPC & Subnet"
+            }
+          },
+          {
+            "Parameters": [
+              "SGVPC"
+            ],
+            "Label": {
+              "default": "Security Groups"
+            }
+          },
+          {
+            "Parameters": [
+              "VPNEndpointId"
+            ],
+            "Label": {
+              "default": "VPN Configurations"
+            }
+          }
+        ],
+        "ParameterLabels": {
+          "EmailAddr": {
+            "default": "E-mail Address"
+          },
+          "AvailabilityZone": {
+            "default": "Availability Zone"
+          },
+          "KeyName": {
+            "default": "SSH Key Name"
+          },
+          "IPRangeAccess": {
+            "default": "An IP Address or range for access"
+          },
+          "OrganizationID": {
+            "default": "Organization ID"
+          },
+          "LicenseKey": {
+            "default": "License Key"
+          },
+          "VPCID": {
+            "default": "VPC ID"
+          },
+          "SubnetPrivate": {
+            "default": "Private Subnet"
+          },
+          "SGVPC": {
+            "default": "VPC Security Group"
+          },
+          "PrivateRouteTable": {
+            "default": "Private Subnet Route Table"
+          },
+          "EFSIP": {
+            "default": "EFS IP Address"
+          },
+          "PublicSubnetCIDR": {
+            "default": "CIDR Block for Public Subnet"
+          },
+          "VPNEndpointId": {
+            "default": "Client VPN Endpoint ID"
+          }
+        }
+      }
+    },
+    "Conditions": {
+      "IsPublic": {
+        "Fn::And": [
+          {"Fn::Equals": ["", {"Ref": "VPCID"}]},
+          {"Fn::Equals": ["", {"Ref": "SubnetPrivate"}]}
+        ]
+      }
+    },
+    "Parameters": {
+      "KeyName": {
+        "Description": "Name of an existing EC2 key pair to enable SSH access to instances",
+        "Type": "AWS::EC2::KeyPair::KeyName",
+        "ConstraintDescription": "Must be the name of an existing EC2 KeyPair",
+        "MinLength": "1"
+      },
+      "LicenseKey": {
+        "Description": "Enter your License Key",
+        "Type": "String"
+      },
+      "EmailAddr": {
+        "Description": "Enter any reachable e-mail address. Credentials to access your app will be sent there",
+        "Type": "String"
+      },
+      "OrganizationID": {
+        "Description": "Enter your Organization ID",
+        "Type": "String"
+      },
+      "AvailabilityZone": {
+        "Description": "Pick an Availability Zone for the Primary Subnet. Public subnet will be created in here",
+        "Type": "AWS::EC2::AvailabilityZone::Name"
+      },
+      "SubnetPrivate": {
+        "Description": "Pick a private subnet",
+        "Type": "AWS::EC2::Subnet::Id",
+        "Default": "subnet-05a6abfd5e8eadabd"
+      },
+      "VPCID": {
+        "Description": "Pick private VPC",
+        "Type": "AWS::EC2::VPC::Id",
+        "Default": "vpc-0e573f817016987c6"
+      },
+      "IPRangeAccess": {
+        "Type": "String",
+        "Description": "The IP address range or single the IP address in CIDR format will use get access to the public URL.\n Example: IP range - 1.1.1.1/24, single IP - 1.1.1.1/32.\n Default: \"0.0.0.0/0\"",
+        "Default": ""
+      },
+      "SGVPC": {
+        "Type": "AWS::EC2::SecurityGroup::Id",
+        "Description": "Select VPC Security Group"
+      },
+      "PrivateRouteTable": {
+        "Type": "String",
+        "Description": "Type Private Subnet Route Table ID"
+      },
+      "EFSIP": {
+        "Type": "String",
+        "Description": "Type EFS IP Address"
+      },
+      "PublicSubnetCIDR": {
+        "Type": "String",
+        "Description": "Type Public Subnet CIDR Block"
+      },
+      "VPNEndpointId": {
+        "Type": "String",
+        "Description": "VPN Endpoint ID"
+      }
+    },
+    "Resources": {
+      "TmpFileSystem": {
+        "Type": "AWS::EFS::FileSystem",
+        "Properties": {
+          "Encrypted": true
+        }
+      },
+      "TmpMountTarget": {
+        "Type": "AWS::EFS::MountTarget",
+        "Properties": {
+          "FileSystemId": {
+            "Ref": "TmpFileSystem"
+          },
+          "IpAddress": {
+            "Ref": "EFSIP"
+          },
+          "SecurityGroups": [
+            {
+              "Ref": "SGEFS"
+            }
+          ],
+          "SubnetId": {
+            "Ref": "SubnetPrivate"
+          }
+        }
+      },
+      "MongoDBRootPassword": {
+        "Type": "AWS::CloudFormation::CustomResource",
+        "Properties": {
+          "ServiceToken": {
+            "Fn::GetAtt": [
+              "GenerateRandomPassLambda",
+              "Arn"
+            ]
+          }
+        }
+      },
+      "AppMasterKey": {
+        "Type": "AWS::CloudFormation::CustomResource",
+        "Properties": {
+          "ServiceToken": {
+            "Fn::GetAtt": [
+              "GenerateMasterKeyLambda",
+              "Arn"
+            ]
+          }
+        }
+      },
+      "RestJWTSecret": {
+        "Type": "AWS::CloudFormation::CustomResource",
+        "Properties": {
+          "ServiceToken": {
+            "Fn::GetAtt": [
+              "GenerateRandomPassLambda",
+              "Arn"
+            ]
+          }
+        }
+      },
+      "ExportAppURL": {
+        "Type": "AWS::CloudFormation::CustomResource",
+        "Properties": {
+          "Value": {
+            "Fn::Sub": [
+              "http://${Domain}",
+              {
+                "Domain": {
+                  "Fn::GetAtt": [
+                    "ELBLB1695V",
+                    "DNSName"
+                  ]
+                }
+              }
+            ]
+          },
+          "Email": {
+            "Ref": "EmailAddr"
+          },
+          "ServiceToken": {
+            "Fn::GetAtt": [
+              "ExportAppURLLambda",
+              "Arn"
+            ]
+          }
+        }
+      },
+      "GenerateMasterKeyLambda": {
+        "Type": "AWS::Lambda::Function",
+        "Properties": {
+          "Code": {
+            "ZipFile": {
+              "Fn::Join": [
+                "",
+                [
+                  "const response = require('cfn-response');\n",
+                  "const crypto = require('crypto');\n",
+                  "\n",
+                  "exports.handler = function (event, context) {\n",
+                  "  try {\n",
+                  "    const { RequestType } = event;\n",
+                  "    if (RequestType === 'Delete') return response.send(event, context, 'SUCCESS', {});\n",
+                  "    const MasterKey = generateMasterKey();\n",
+                  "    response.send(event, context, 'SUCCESS', { MasterKey });\n",
+                  "  } catch (err) {\n",
+                  "    console.log(err);\n",
+                  "    response.send(event, context, 'FAILED', {});\n",
+                  "  }\n",
+                  "}\n",
+                  "\n",
+                  "function generateMasterKey () {\n",
+                  "  const organizationCode = '",
+                  {
+                    "Ref": "OrganizationID"
+                  },
+                  "';\n",
+                  "  return crypto.createHash('sha256').update(organizationCode).digest('hex');\n",
+                  "}\n"
+                ]
+              ]
+            }
+          },
+          "Handler": "index.handler",
+          "Role": {
+            "Fn::GetAtt": [
+              "IAMR1CXVL",
+              "Arn"
+            ]
+          },
+          "Runtime": "nodejs12.x",
+          "Timeout": 10
+        }
+      },
+      "GenerateRandomPassLambda": {
+        "Type": "AWS::Lambda::Function",
+        "Properties": {
+          "Code": {
+            "ZipFile": {
+              "Fn::Join": [
+                "",
+                [
+                  "const response = require('cfn-response');\n",
+                  "const crypto = require('crypto')\n",
+                  "\n",
+                  "exports.handler = function (event, context) {\n",
+                  "  try {\n",
+                  "    const { RequestType } = event;\n",
+                  "    if (RequestType === 'Delete') return response.send(event, context, 'SUCCESS', {});\n",
+                  "    const RandomPassword = crypto.randomBytes(32).toString('hex');\n",
+                  "    response.send(event, context, 'SUCCESS', { RandomPassword });\n",
+                  "  } catch (err) {\n",
+                  "    console.log(err);\n",
+                  "    response.send(event, context, 'FAILED', {});\n",
+                  "  }\n",
+                  "}\n"
+                ]
+              ]
+            }
+          },
+          "Handler": "index.handler",
+          "Role": {
+            "Fn::GetAtt": [
+              "IAMR1CXVL",
+              "Arn"
+            ]
+          },
+          "Runtime": "nodejs12.x",
+          "Timeout": 10
+        }
+      },
+      "ExportAppURLLambda": {
+        "Type": "AWS::Lambda::Function",
+        "Properties": {
+          "Code": {
+            "ZipFile": {
+              "Fn::Join": [
+                "",
+                [
+                  "const response = require('cfn-response');\n",
+                  "const https = require('https');\n",
+                  "\n",
+                  "exports.handler = function (event, context) {\n",
+                  "  const { RequestType } = event;\n",
+                  "  if (RequestType === 'Delete') return response.send(event, context, 'SUCCESS', {});\n",
+                  "  validateLicense()\n",
+                  "    .then(JSON.parse)\n",
+                  "    .then(({ token }) => {\n",
+                  "      if (!token) throw Error('Failed to validate license');\n",
+                  "      return updateEnvOnAdmin(event, context, token);\n",
+                  "    })\n",
+                  "    .then(() => response.send(event, context, 'SUCCESS', {}))\n",
+                  "    .catch((err) => {\n",
+                  "      console.log(err);\n",
+                  "      response.send(event, context, 'FAILED', {});\n",
+                  "    });\n",
+                  "}\n",
+                  "\n",
+                  "async function validateLicense () {\n",
+                  "  const organizationCode = '",
+                  {
+                    "Ref": "OrganizationID"
+                  },
+                  "';\n",
+                  "  const licenseKey = '",
+                  {
+                    "Ref": "LicenseKey"
+                  },
+                  "';\n",
+                  "  const auth = `Basic ${Buffer.from(`${organizationCode}:${licenseKey}`).toString('base64')}`;\n",
+                  "  const options = {\n",
+                  "    method: 'POST',\n",
+                  "    hostname: 'admin.dashsdk.com',\n",
+                  "    port: 443,\n",
+                  "    path: '/api/auth/organization/token',\n",
+                  "    headers: {\n",
+                  "      'Authorization': auth,\n",
+                  "    }\n",
+                  "  };\n",
+                  "  return new Promise((resolve, reject) => {\n",
+                  "    const request = https.request(options, (res) => {\n",
+                  "      const chunks = [];\n",
+                  "      res.on('data', (chunk) => chunks.push(chunk));\n",
+                  "      res.on('end', () => resolve(Buffer.concat(chunks).toString()));\n",
+                  "    });\n",
+                  "    request.on('error', reject);\n",
+                  "    request.end();\n",
+                  "  });\n",
+                  "}\n",
+                  "\n",
+                  "async function updateEnvOnAdmin (event, context, accessToken) {\n",
+                  "  const { Value, Email } = event.ResourceProperties;\n",
+                  "  const { invokedFunctionArn } = context;\n",
+                  "  const awsAccountId = invokedFunctionArn.split(':')[4];\n",
+                  "  const data = [{\n",
+                  "    key: 'APP_ADDRESS',\n",
+                  "    value: Value\n",
+                  "  }, {\n",
+                  "    key: 'EMAIL',\n",
+                  "    value: Email\n",
+                  "  }, {\n",
+                  "    key: 'AWS_ACCOUNT_ID',\n",
+                  "    value: awsAccountId\n",
+                  "  }];\n",
+                  "  const options = {\n",
+                  "    method: 'PUT',\n",
+                  "    hostname: 'admin.dashsdk.com',\n",
+                  "    port: 443,\n",
+                  "    path: `/api/environments/restUpdateEnvVars?access_token=${accessToken}`,\n",
+                  "    headers: {\n",
+                  "      'Content-Type': 'application/json'\n",
+                  "    }\n",
+                  "  }\n",
+                  "  return new Promise((resolve, reject) => {\n",
+                  "    const request = https.request(options, (res) => {\n",
+                  "      res.on('data', () => {});\n",
+                  "      res.on('end', resolve);\n",
+                  "    });\n",
+                  "    request.on('error', reject);\n",
+                  "    request.write(JSON.stringify(data));\n",
+                  "    request.end();\n",
+                  "  });\n",
+                  "}\n"
+                ]
+              ]
+            }
+          },
+          "Handler": "index.handler",
+          "Role": {
+            "Fn::GetAtt": [
+              "IAMR1CXVL",
+              "Arn"
+            ]
+          },
+          "Runtime": "nodejs12.x",
+          "Timeout": 10
+        }
+      },
+      "EC2Main": {
+        "Type": "AWS::EC2::Instance",
+        "Properties": {
+          "AvailabilityZone": {
+            "Ref": "AvailabilityZone"
+          },
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                "VolumeSize": "20"
+              }
+            }
+          ],
+          "DisableApiTermination": false,
+          "EbsOptimized": false,
+          "ImageId": {
+            "Fn::FindInMap": [
+              "MainAMI",
+              {
+                "Ref": "AWS::Region"
+              },
+              "HVM64"
+            ]
+          },
+          "InstanceInitiatedShutdownBehavior": "stop",
+          "InstanceType": "t3.large",
+          "KeyName": {
+            "Ref": "KeyName"
+          },
+          "Monitoring": false,
+          "SubnetId": {
+            "Ref": "SubnetPrivate"
+          },
+          "Tenancy": "default",
+          "SecurityGroupIds": [
+            {
+              "Ref": "SGMain"
+            }
+          ],
+          "IamInstanceProfile": {
+            "Ref": "IAMIP3IP36"
+          },
+          "Tags": [
+            {
+              "Key": "Name",
+              "Value": {
+                "Fn::Join": [
+                  " - ",
+                  [
+                    {
+                      "Ref": "AWS::StackName"
+                    },
+                    "EC2Main"
+                  ]
+                ]
+              }
+            }
+          ],
+          "UserData": {
+            "Fn::Base64": {
+              "Fn::Join": [
+                "",
+                [
+                  "#!/bin/bash",
+                  "\n",
+                  "dd if=/dev/zero of=/swapfile count=2048 bs=1MiB",
+                  "\n",
+                  "chmod 600 /swapfile",
+                  "\n",
+                  "mkswap /swapfile",
+                  "\n",
+                  "swapon /swapfile",
+                  "\n",
+                  "echo \"/swapfile swap swap defaults 0 0\" >> /etc/fstab",
+                  "\n",
+                  "AdminUrl=\"https://admin.dashsdk.com\"",
+                  "\n",
+                  "token=$(curl -X POST $AdminUrl/api/auth/organization/token -u '",
+                  {
+                    "Ref": "OrganizationID"
+                  },
+                  ":",
+                  {
+                    "Ref": "LicenseKey"
+                  },
+                  "' -H 'Cache-Control: no-cache' -H 'Content-Type: application/json' | jq -r '.token')",
+                  "\n",
+                  "env_rest=$(curl --raw \"$AdminUrl/api/environments/restEnv?access_token=$token&name=dash-rest&format=bash\" | sed 's/^\"//g' | sed 's/\"$//g')",
+                  "\n",
+                  "Domain=$(curl \"$AdminUrl/api/environments/restEnv?access_token=$token&name=dash-rest\" | jq '.[].envVars[] | select(.name==\"APP_ADDRESS\").value'| sed 's/\"//g')",
+                  "\n",
+                  "if [[ $Domain == \"https://\"* ]]; then /var/www/dash-rest/scripts/domain/dash_ssl.sh $(echo $Domain | sed 's/https:\\/\\///') install ",
+                  {
+                    "Ref": "EmailAddr"
+                  },
+                  "; fi",
+                  "\n",
+                  "echo -e $env_rest > /var/www/dash-rest/.env",
+                  "\n",
+                  "echo '#---GENERATED VALUES BELOW---' >> /var/www/dash-rest/.env",
+                  "\n",
+                  "echo 'GOOGLE_API=AIzaSyDYawRTXGVNpxq3JMkwyYfdqNPpA43v3Ac' >> /var/www/dash-rest/.env",
+                  "\n",
+                  "echo 'GOOGLE_CLIENT_ID=706204417730-9ee2ja5p1miuaa183tjhkmsdikeq6hhs.apps.googleusercontent.com' >> /var/www/dash-rest/.env",
+                  "\n",
+                  "echo 'GOOGLE_CLIENT_SECRET=0EBgqvoLgQwNSgoEuDrBE0CJ' >> /var/www/dash-rest/.env",
+                  "\n",
+                  "echo 'GOOGLE_REDIRECT=https://admin.dashsdk.com/api/auth/google/callback' >> /var/www/dash-rest/.env",
+                  "\n",
+                  "echo 'DASH_ADMIN_URL=https://admin.dashsdk.com/api/' >> /var/www/dash-rest/.env",
+                  "\n",
+                  "echo 'ADMIN_MASTER_TOKEN=w6XS54JzpUGMbNqghQ5zDA==' >> /var/www/dash-rest/.env",
+                  "\n",
+                  "echo 'DASH_UPDATE_CLIENT_TOPIC=arn:aws:sns:us-east-1:780611606251:UpdateClientTopic' >> /var/www/dash-rest/.env",
+                  "\n",
+                  "echo -e 'AWS_S3_BUCKET=",
+                  {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "dash",
+                        {
+                          "Ref": "LicenseKey"
+                        }
+                      ]
+                    ]
+                  },
+                  "\\n",
+                  "'",
+                  " >> /var/www/dash-rest/.env",
+                  "\n",
+                  "echo -e 'AWS_REGION=",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  "\\n",
+                  "'",
+                  " >> /var/www/dash-rest/.env",
+                  "\n",
+                  "echo -e 'DASH_SCOUT_ROLE_NAME=",
+                  {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "Dash-Scout-",
+                        {
+                          "Ref": "AWS::StackName"
+                        }
+                      ]
+                    ]
+                  },
+                  "\\n",
+                  "'",
+                  " >> /var/www/dash-rest/.env",
+                  "\n",
+                  "echo -e 'DASH_REST_MASTER_KEY='",
+                  {
+                    "Fn::GetAtt": [
+                      "AppMasterKey",
+                      "MasterKey"
+                    ]
+                  },
+                  " >> /var/www/dash-rest/.env",
+                  "\n",
+                  "echo -e 'DASH_REST_JWT_SECRET='",
+                  {
+                    "Fn::GetAtt": [
+                      "RestJWTSecret",
+                      "RandomPassword"
+                    ]
+                  },
+                  " >> /var/www/dash-rest/.env",
+                  "\n",
+                  "MONGODB_URI='mongodb://root:",
+                  {
+                    "Fn::GetAtt": [
+                      "MongoDBRootPassword",
+                      "RandomPassword"
+                    ]
+                  },
+                  "@127.0.0.1:27017/dash-rest?authSource=admin'",
+                  "\n",
+                  "echo MONGODB_URI=$MONGODB_URI >> /var/www/dash-rest/.env",
+                  "\n",
+                  "echo BACKUP_LIVE_TIME_DAYS=90 >> /var/www/dash-rest/.env",
+                  "\n",
+                  "echo -e 'DASH_IAM_ROLE_ARN=",
+                  {
+                    "Fn::GetAtt": [
+                      "IAMR1CXVL",
+                      "Arn"
+                    ]
+                  },
+                  "\\n",
+                  "'",
+                  " >> /var/www/dash-rest/.env",
+                  "\n",
+                  "sed -i.bak \"s/__MASTER_KEY__/",
+                  {
+                    "Fn::GetAtt": [
+                      "AppMasterKey",
+                      "MasterKey"
+                    ]
+                  },
+                  "/g\" /var/www/dash-frontend/dist/*.js",
+                  "\n",
+                  "sed -i.bak \"s#__DASH_IAM_ROLE_ARN__#",
+                  {
+                    "Fn::GetAtt": [
+                      "IAMR1CXVL",
+                      "Arn"
+                    ]
+                  },
+                  "#g\" /var/www/dash-frontend/dist/*.js",
+                  "\n",
+                  "sudo service nginx restart",
+                  "\n",
+                  "sudo mkdir /opt/scripts",
+                  "\n",
+                  "sudo chown -R ubuntu /opt/scripts",
+                  "\n",
+                  "/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s",
+                  "\n",
+                  "sudo service cron restart",
+                  "\n",
+                  "mkdir -p /var/lib/mongodb/",
+                  "\n",
+                  "mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,port=2049 10.0.0.254:/ /var/lib/mongodb/",
+                  "\n",
+                  "sudo sh -c \"echo '10.0.0.254:/ /var/lib/mongodb nfs4 defaults 0 0'",
+                  ">> /etc/fstab\"",
+                  "\n",
+                  "sudo systemctl enable mongod.service",
+                  "\n",
+                  "chown -R mongodb:mongodb /var/lib/mongodb",
+                  "\n",
+                  "sed -i 's/security://g' /etc/mongod.conf",
+                  "\n",
+                  "sed -i '/authorization/d' /etc/mongod.conf",
+                  "\n",
+                  "sudo service mongod restart",
+                  "\n",
+                  "until mongo --eval \"db.runCommand({ serverStatus: 1 })\"",
+                  "\n",
+                  "do",
+                  "\n",
+                  "  sleep 5",
+                  "\n",
+                  "done",
+                  "\n",
+                  "mongo admin --eval \"db.getSiblingDB('admin').dropUser('root')\"",
+                  "\n",
+                  "mongo admin --eval \"db.getSiblingDB('dash-rest').dropUser('root')\"",
+                  "\n",
+                  "mongo admin --eval \"db.getSiblingDB('dash-rest').createUser({user: 'root', pwd: '",
+                  {
+                    "Fn::GetAtt": [
+                      "MongoDBRootPassword",
+                      "RandomPassword"
+                    ]
+                  },
+                  "', roles: [{role: \\\"dbOwner\\\", db: \\\"dash-rest\\\"}]})\"",
+                  "\n",
+                  "mongo admin --eval \"db.getSiblingDB('admin').createUser({user: 'root', pwd: '",
+                  {
+                    "Fn::GetAtt": [
+                      "MongoDBRootPassword",
+                      "RandomPassword"
+                    ]
+                  },
+                  "', roles: [{role: \\\"dbOwner\\\", db: \\\"dash-rest\\\"}]})\"",
+                  "\n",
+                  "sudo sh -c \"echo 'security:\\n  authorization: \"enabled\"' >> /etc/mongod.conf\"",
+                  "\n",
+                  "sudo service mongod restart",
+                  "\n",
+                  "while [[ -z $(netstat -lt | grep 27017) ]]; do sleep 10; done",
+                  "\n",
+                  "sleep 10",
+                  "\n",
+                  "echo '0 3 * * * /var/www/dash-rest/scripts/ssh/supportAccess.sh --disable' > cronsh",
+                  "\n",
+                  "crontab cronsh",
+                  "\n",
+                  "rm cronsh",
+                  "\n",
+                  "su - ubuntu -c \"cd /var/www/dash-rest && npm run migrate\" &>/var/log/mongodb/migrate.log",
+                  "\n",
+                  "su - ubuntu -c \"cd /var/www/dash-rest && export DEBUG='dash:*' && pm2 start\"",
+                  "\n",
+                  "sudo env PATH=$PATH:/usr/bin /usr/local/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu",
+                  "\n",
+                  "su - ubuntu -c \"pm2 save\"",
+                  "\n"
+                ]
+              ]
+            }
+          }
+        }
+      },
+      "ELBLB1695V": {
+        "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+        "Properties": {
+          "Scheme": "internal",
+          "HealthCheck": {
+            "HealthyThreshold": "2",
+            "Interval": "30",
+            "Target": "TCP:80",
+            "Timeout": "10",
+            "UnhealthyThreshold": "2"
+          },
+          "ConnectionSettings": {
+            "IdleTimeout": 3600
+          },
+          "Listeners": [
+            {
+              "InstancePort": "80",
+              "LoadBalancerPort": "80",
+              "Protocol": "tcp",
+              "InstanceProtocol": "tcp"
+            },
+            {
+              "InstancePort": "443",
+              "LoadBalancerPort": "443",
+              "Protocol": "tcp",
+              "InstanceProtocol": "tcp"
+            }
+          ],
+          "Subnets": [
+            {
+              "Ref": "SubnetPrivate"
+            }
+          ],
+          "SecurityGroups": [
+            {
+              "Ref": "SGELB"
+            },
+            {
+              "Ref": "SGVPC"
+            },
+            {
+              "Ref": "SGInternalAccess"
+            }
+          ],
+          "Instances": [
+            {
+              "Ref": "EC2Main"
+            }
+          ]
+        }
+      },
+      "SGDB": {
+        "Type": "AWS::EC2::SecurityGroup",
+        "Properties": {
+          "GroupDescription": "Security Group for Database",
+          "SecurityGroupIngress": [
+            {
+              "IpProtocol": "tcp",
+              "FromPort": 27017,
+              "ToPort": 27017,
+              "SourceSecurityGroupId": {
+                "Ref": "SGMain"
+              }
+            }
+          ],
+          "SecurityGroupEgress": [
+            {
+              "IpProtocol": "-1",
+              "CidrIp": "0.0.0.0/0"
+            }
+          ],
+          "VpcId": {
+            "Ref": "VPCID"
+          }
+        }
+      },
+      "SGELB": {
+        "Type": "AWS::EC2::SecurityGroup",
+        "Properties": {
+          "GroupDescription": "Security Group for Load Balancer",
+          "SecurityGroupIngress": [
+            {
+              "IpProtocol": "tcp",
+              "FromPort": 80,
+              "ToPort": 80,
+              "CidrIp": "35.175.96.164/32"
+            },
+            {
+              "IpProtocol": "tcp",
+              "FromPort": 443,
+              "ToPort": 443,
+              "CidrIp": "35.175.96.164/32"
+            },
+            {
+              "IpProtocol": "tcp",
+              "FromPort": 80,
+              "ToPort": 80,
+              "CidrIp": "34.237.9.73/32"
+            },
+            {
+              "IpProtocol": "tcp",
+              "FromPort": 443,
+              "ToPort": 443,
+              "CidrIp": "34.237.9.73/32"
+            }
+          ],
+          "SecurityGroupEgress": [
+            {
+              "IpProtocol": "-1",
+              "CidrIp": "0.0.0.0/0"
+            }
+          ],
+          "VpcId": {
+            "Ref": "VPCID"
+          }
+        }
+      },
+      "IAMSC2DT": {
+        "Type": "AWS::IAM::Role",
+        "Properties": {
+          "AssumeRolePolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "AWS": {
+                    "Fn::GetAtt": [
+                      "IAMR1CXVL",
+                      "Arn"
+                    ]
+                  }
+                },
+                "Action": "sts:AssumeRole"
+              }
+            ]
+          },
+          "ManagedPolicyArns": [
+            "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess",
+            "arn:aws:iam::aws:policy/AmazonVPCReadOnlyAccess",
+            "arn:aws:iam::aws:policy/SecurityAudit",
+            "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess",
+            "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess",
+            "arn:aws:iam::aws:policy/AWSLambda_ReadOnlyAccess",
+            "arn:aws:iam::aws:policy/IAMReadOnlyAccess"
+          ],
+          "Path": "/",
+          "RoleName": {
+            "Fn::Join": [
+              "",
+              [
+                "Dash-Scout-",
+                {
+                  "Ref": "AWS::StackName"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      "IAMIP3IP36": {
+        "Type": "AWS::IAM::InstanceProfile",
+        "Properties": {
+          "Path": "/",
+          "Roles": [
+            {
+              "Ref": "IAMR1CXVL"
+            }
+          ]
+        }
+      },
+      "IAMP4O4JS": {
+        "Type": "AWS::IAM::Policy",
+        "Properties": {
+          "PolicyName": "IAMP4O4JS",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "iam:PassRole"
+                ],
+                "Resource": [
+                  {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:iam::",
+                        {
+                          "Ref": "AWS::AccountId"
+                        },
+                        ":role/",
+                        {
+                          "Fn::Join": [
+                            "-",
+                            [
+                              {
+                                "Ref": "AWS::Region"
+                              },
+                              {
+                                "Ref": "AWS::StackName"
+                              },
+                              "dash",
+                              "iamrole"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "s3:CreateBucket",
+                  "s3:DeleteObject",
+                  "s3:ListAllMyBuckets",
+                  "s3:ListBucket",
+                  "s3:PutObject",
+                  "s3:PutObjectAcl",
+                  "s3:GetObject",
+                  "s3:GetBucketPolicy"
+                ],
+                "Resource": "arn:aws:s3:::*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "rds:ModifyDBInstance",
+                  "rds:describeDBInstances"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "cloudformation:ListStackResources"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "s3:PutBucketLogging",
+                  "s3:GetBucketLogging",
+                  "s3:PutBucketAcl",
+                  "s3:GetBucketAcl"
+                ],
+                "Resource": "arn:aws:s3:::*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "ec2:RevokeSecurityGroupIngress",
+                  "ec2:AuthorizeSecurityGroupIngress",
+                  "ec2:Describe*",
+                  "ec2:CreateSnapshot",
+                  "ec2:CreateTags",
+                  "ec2:DeleteSnapshot",
+                  "ec2:CreateFlowLogs",
+                  "ec2:DeleteFlowLogs"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "iam:UpdateAccountPasswordPolicy",
+                  "iam:GenerateCredentialReport",
+                  "iam:GenerateServiceLastAccessedDetails",
+                  "iam:Get*",
+                  "iam:List*",
+                  "iam:SimulateCustomPolicy",
+                  "iam:SimulatePrincipalPolicy"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "organizations:Describe*",
+                  "organizations:List*"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "cloudwatch:PutMetricData"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "events:PutEvents",
+                  "events:listRules"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "config:describeDeliveryChannels",
+                  "config:describeConfigRules",
+                  "config:putDeliveryChannel",
+                  "config:DeleteEvaluationResults",
+                  "config:StartConfigRulesEvaluation",
+                  "config:PutConfigRule",
+                  "config:DeleteConfigRule"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "sns:ListSubscriptionsByTopic",
+                  "sns:listTopics",
+                  "sns:createTopic",
+                  "sns:subscribe",
+                  "sns:unsubscribe",
+                  "sns:confirmSubscription"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "logs:PutLogEvents",
+                  "logs:DescribeLogGroups",
+                  "logs:DescribeLogStreams",
+                  "logs:CreateLogGroup",
+                  "logs:CreateLogStream"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "autoscaling:DescribeAutoScalingGroups",
+                  "autoscaling:DescribeLaunchConfigurations"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "lambda:ListFunctions"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "glacier:listVaults"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "cloudtrail:DescribeTrails"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "elasticloadbalancing:DescribeLoadBalancers",
+                  "kms:ListKeys",
+                  "dynamodb:ListTables"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "kms:ListKeys",
+                  "dynamodb:ListTables"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "dynamodb:ListTables"
+                ],
+                "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "sts:AssumeRole"
+                ],
+                "Resource": "*"
+              }
+            ]
+          },
+          "Roles": [
+            {
+              "Ref": "IAMR1CXVL"
+            }
+          ]
+        }
+      },
+      "IAMR1CXVL": {
+        "Type": "AWS::IAM::Role",
+        "Properties": {
+          "AssumeRolePolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "Service": "ec2.amazonaws.com"
+                },
+                "Action": [
+                  "sts:AssumeRole"
+                ]
+              },
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "Service": "lambda.amazonaws.com"
+                },
+                "Action": "sts:AssumeRole"
+              },
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "Service": "vpc-flow-logs.amazonaws.com"
+                },
+                "Action": "sts:AssumeRole"
+              }
+            ]
+          },
+          "Path": "/",
+          "RoleName": {
+            "Fn::Join": [
+              "-",
+              [
+                {
+                  "Ref": "AWS::Region"
+                },
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "dash",
+                "iamrole"
+              ]
+            ]
+          }
+        }
+      },
+      "S3B1BJPV": {
+        "Type": "AWS::S3::Bucket",
+        "Properties": {
+          "BucketName": {
+            "Fn::Join": [
+              "-",
+              [
+                "dash",
+                {
+                  "Ref": "LicenseKey"
+                }
+              ]
+            ]
+          },
+          "VersioningConfiguration": {
+            "Status": "Enabled"
+          },
+          "BucketEncryption": {
+            "ServerSideEncryptionConfiguration": [
+              {
+                "ServerSideEncryptionByDefault": {
+                  "SSEAlgorithm": "AES256"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "SGEFS": {
+        "Type": "AWS::EC2::SecurityGroup",
+        "Properties": {
+          "GroupDescription": "Security Group for EFS",
+          "SecurityGroupIngress": [
+            {
+              "IpProtocol": "tcp",
+              "FromPort": 2049,
+              "ToPort": 2049,
+              "SourceSecurityGroupId": {
+                "Ref": "SGMain"
+              }
+            },
+            {
+              "IpProtocol": "tcp",
+              "FromPort": 2049,
+              "ToPort": 2049,
+              "SourceSecurityGroupId": {
+                "Ref": "SGDB"
+              }
+            }
+          ],
+          "SecurityGroupEgress": [
+            {
+              "IpProtocol": "-1",
+              "CidrIp": "0.0.0.0/0"
+            }
+          ],
+          "VpcId": {
+            "Ref": "VPCID"
+          }
+        }
+      },
+      "PrivateSubnetRoute": {
+        "Type" : "AWS::EC2::Route",
+        "Properties" : {
+            "RouteTableId": {
+              "Ref": "PrivateRouteTable"
+            },
+            "DestinationCidrBlock": "0.0.0.0/0",
+            "NatGatewayId": {
+              "Ref": "NATGateway"
+            }
+      }
+      },
+      "EC2SRTA3XXRN": {
+        "Type": "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties": {
+          "SubnetId": {
+            "Ref": "SubnetPrivate"
+          },
+          "RouteTableId": {
+            "Ref": "PrivateRouteTable"
+          }
+        }
+      },
+      "BasicDashboard": {
+        "Type": "AWS::CloudWatch::Dashboard",
+        "Properties": {
+          "DashboardName": {
+            "Ref": "AWS::StackName"
+          },
+          "DashboardBody": {
+            "Fn::Join": [
+              "",
+              [
+                "{",
+                "\"widgets\":[",
+                "{\"type\":\"metric\",\"x\":0,\"y\":0,\"width\": 6,\"height\":6,\"properties\":{\"view\":\"timeSeries\",\"stacked\":false,\"metrics\":[[\"CWAgent\",\"cpu_usage_active\",\"InstanceId\",\"",
+                {
+                  "Ref": "EC2Main"
+                },
+                "\",\"cpu\",\"cpu-total\"]],\"region\":\"",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\",\"title\":\"CPU_USAGE_PERCENT\"}},",
+                "{\"type\":\"metric\",\"x\":6,\"y\":0,\"width\": 6,\"height\":6,\"properties\":{\"view\":\"timeSeries\",\"stacked\":false,\"metrics\":[[\"CWAgent\",\"mem_used_percent\",\"InstanceId\",\"",
+                {
+                  "Ref": "EC2Main"
+                },
+                "\"]],\"region\":\"",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\",\"title\":\"MEMORY_USED_PERCENT\"}},",
+                "{\"type\":\"metric\",\"x\":12,\"y\":0,\"width\": 6,\"height\":3,\"properties\":{\"view\":\"singleValue\",\"metrics\":[[\"CWAgent\",\"disk_used_percent\",\"InstanceId\",\"",
+                {
+                  "Ref": "EC2Main"
+                },
+                "\",\"path\",\"/\",\"device\",\"xvda1\",\"fstype\",\"ext4\"]],\"region\":\"",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\",\"title\":\"DISK_USED_PERCENT\"}}",
+                "]",
+                "}"
+              ]
+            ]
+          }
+        }
+      },
+      "SGMain": {
+        "Type": "AWS::EC2::SecurityGroup",
+        "Properties": {
+          "GroupDescription": "Main Security Group",
+          "SecurityGroupIngress": [
+            {
+              "IpProtocol": "tcp",
+              "FromPort": 80,
+              "ToPort": 80,
+              "SourceSecurityGroupId": {
+                "Ref": "SGELB"
+              }
+            },
+            {
+              "IpProtocol": "tcp",
+              "FromPort": 443,
+              "ToPort": 443,
+              "SourceSecurityGroupId": {
+                "Ref": "SGELB"
+              }
+            }
+          ],
+          "SecurityGroupEgress": [
+            {
+              "IpProtocol": "-1",
+              "CidrIp": "0.0.0.0/0"
+            }
+          ],
+          "VpcId": {
+            "Ref": "VPCID"
+          }
+        }
+      },
+      "SGInternalAccess": {
+        "Type": "AWS::EC2::SecurityGroup",
+        "DependsOn": "SGMain",
+        "Properties": {
+          "GroupDescription": "ELB Access Security Group",
+          "SecurityGroupIngress": [
+            {
+              "IpProtocol": "tcp",
+              "FromPort": 443,
+              "ToPort": 443,
+              "SourceSecurityGroupId": {
+                "Ref": "SGMain"
+              }
+            },
+            {
+              "IpProtocol": "tcp",
+              "FromPort": 80,
+              "ToPort": 80,
+              "SourceSecurityGroupId": {
+                "Ref": "SGMain"
+              }
+            }
+          ],
+          "SecurityGroupEgress": [
+            {
+              "IpProtocol": "-1",
+              "CidrIp": "0.0.0.0/0"
+            }
+          ],
+          "VpcId": {
+            "Ref": "VPCID"
+          }
+        }
+      },
+      "InternetGateway": {
+        "Type": "AWS::EC2::InternetGateway",
+        "Properties": {
+          "Tags": [
+            {
+              "Key": "Name",
+              "Value": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    {
+                      "Ref": "AWS::StackName"
+                    },
+                    "ig"
+                  ]
+                ]
+              }
+          }
+        ]
+        }
+      },
+      "InternetGatewayAttachment": {
+        "Type": "AWS::EC2::VPCGatewayAttachment",
+        "Properties": {
+          "InternetGatewayId": {
+            "Ref": "InternetGateway"
+          },
+          "VpcId": {
+            "Ref": "VPCID"
+          }
+        }
+      },
+      "PublicSubnet": {
+        "Type": "AWS::EC2::Subnet",
+        "Properties": {
+          "VpcId": {
+            "Ref": "VPCID"
+          },
+          "AvailabilityZone": {
+            "Ref": "AvailabilityZone"
+          },
+          "CidrBlock": {
+            "Ref": "PublicSubnetCIDR"
+          },
+          "MapPublicIpOnLaunch": true,
+          "Tags": [
+            {
+              "Key": "Name",
+              "Value": {
+                "Fn::Join": [
+                  " ",
+                  [
+                    {
+                      "Ref": "AWS::StackName"
+                    },
+                    "Public Subnet"
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "NATGatewayEIP": {
+        "Type": "AWS::EC2::EIP",
+        "DependsOn": "InternetGatewayAttachment",
+        "Properties": {
+          "Domain": "vpc"
+        }
+      },
+      "NATGateway": {
+        "Type": "AWS::EC2::NatGateway",
+        "Properties": {
+          "AllocationId": 
+            {
+              "Fn::GetAtt": [
+                "NATGatewayEIP",
+                "AllocationId"
+              ]
+            },
+          "SubnetId": {
+            "Ref": "PublicSubnet"
+          }
+        }
+      },
+      "PublicRouteTable": {
+        "Type": "AWS::EC2::RouteTable",
+        "Properties": {
+          "VpcId": {
+            "Ref": "VPCID"
+          },
+          "Tags": [{
+            "Key": "Name",
+            "Value": {
+                "Fn::Join": [
+                  " ",
+                  [
+                    {
+                      "Ref": "AWS::StackName"
+                    },
+                    "Public Route"
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "DefaultPublicRoute": {
+        "Type": "AWS::EC2::Route",
+        "DependsOn": "InternetGatewayAttachment",
+        "Properties": {
+          "RouteTableId": {
+            "Ref": "PublicRouteTable"
+          },
+          "DestinationCidrBlock": "0.0.0.0/0",
+          "GatewayId": {
+            "Ref": "InternetGateway"
+          }
+        }
+      },
+      "PublicSubnetRouteTableAssociation": {
+        "Type": "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties": {
+          "RouteTableId": {
+            "Ref": "PublicRouteTable"
+          },
+          "SubnetId": {
+            "Ref": "PublicSubnet"
+          }
+        }
+      },
+      "NoIngressSecurityGroup": {
+        "Type": "AWS::EC2::SecurityGroup",
+        "Properties": {
+          "GroupName": "no-ingress-sg",
+          "GroupDescription": "Security group with no ingress rule",
+          "VpcId": {
+            "Ref": "VPCID"
+          }
+        }
+      },
+      "VPNAssociation": {
+        "Type": "AWS::EC2::ClientVpnTargetNetworkAssociation",
+        "Properties": {
+            "ClientVpnEndpointId": {
+                "Ref": "VPNEndpointId"
+            },
+            "SubnetId": {
+                "Ref": "PublicSubnet"
+            }
+        }
+      }
+    },
+    "Outputs": {
+      "EndpointURL": {
+        "Description": "ELB endpoint",
+        "Value": {
+          "Fn::GetAtt": [
+            "ELBLB1695V",
+            "DNSName"
+          ]
+        }
+      },
+      "PrivateSubnetId": {
+        "Description": "Private Subnet ID",
+        "Value": {
+          "Ref": "SubnetPrivate"
+        }
+      },
+      "PublicSubnetId": {
+        "Description": "Public Subnet ID",
+        "Value": {
+          "Ref": "PublicSubnet"
+        }
+      }
+    }
+  }
+  
